@@ -38,7 +38,7 @@ const KOD={N:"Normal",H:"Hafta tatili",T:"Resmi tatil","İ":"İzinli",S:"Yıllı
 const RENK={N:"#fff6d6",T:"#e9c9c9",H:"#d9c3c3","İ":"#d6dcff",G:"#cfd3e6",R:"#ffd0d8",E:"#f3d2f7",Y:"#d6f6fb",S:"#d3f5d3",O:"#fff3a8",K:"#ffdcb8",C:"#e8e0e0",A:"#cfe3ff"};
 const OLAGAN=new Set(["N","H","T",""]),AYLAR=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"],GUN=["Pz","Pt","Sa","Ça","Pe","Cu","Ct"];
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const b64u={en:u8=>{let s="";u8.forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")},
+const b64u={en:u8=>{let s="";u8.forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/=+$/,"")},/* "_" WhatsApp'ta italik sayılıyor: standart base64 */
   de:s=>{s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}};
 async function ac(s){if(s[0]==="z"){const r=new Response(new Blob([b64u.de(s.slice(1))]).stream().pipeThrough(new DecompressionStream("deflate-raw")));return JSON.parse(await r.text())}return JSON.parse(new TextDecoder().decode(b64u.de(s.slice(1))))}
 async function kapa(o){const u8=new TextEncoder().encode(JSON.stringify(o));try{const r=new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream("deflate-raw")));return"z"+b64u.en(new Uint8Array(await r.arrayBuffer()))}catch(e){return"j"+b64u.en(u8)}}
