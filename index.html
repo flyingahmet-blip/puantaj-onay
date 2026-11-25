@@ -44,6 +44,8 @@ async function ac(s){if(s[0]==="z"){const r=new Response(new Blob([b64u.de(s.sli
 async function kapa(o){const u8=new TextEncoder().encode(JSON.stringify(o));try{const r=new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream("deflate-raw")));return"z"+b64u.en(new Uint8Array(await r.arrayBuffer()))}catch(e){return"j"+b64u.en(u8)}}
 const kodAc=s=>[...s].map(c=>c==="i"?"İ":c==="-"?"":c),kodKapa=g=>g.map(c=>c==="İ"?"i":c||"-").join("");
 function aralik(g,ay){const p=[];let i=0;while(i<g.length){const k=g[i];if(OLAGAN.has(k)){i++;continue}let j=i;while(j+1<g.length&&g[j+1]===k)j++;p.push(`${i===j?i+1:(i+1)+"–"+(j+1)} ${ay} ${(KOD[k]||k).toLocaleLowerCase("tr")}`);i=j+1}return p.join(", ")}
+/* Telefon ikinci bağlantıyı açık sekmede açınca yalnız # değişir, sayfa yenilenmez: yeniden yükle */
+addEventListener("hashchange",()=>location.reload());
 (async()=>{let P;
   try{P=await ac(location.hash.slice(1));if(!P||P.v!==1)throw 0}catch(e){$("#m").innerHTML='<div class="hata">Bağlantı eksik ya da bozuk. Lütfen size WhatsApp\'tan gelen bağlantıya yeniden dokunun ya da muhasebe ofisinizi arayın.</div>';return}
   history.replaceState(null,"",location.pathname); /* kişiler adres çubuğunda / geçmişte kalmasın */
