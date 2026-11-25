@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Puantaj onayı</title>
+<meta name="robots" content="noindex">
+<!-- Müşterinin telefondan puantaj onay formu (Ofis Takip, 2026-11-25, Ahmet: "WhatsApp'tan onaylayabilecekleri bir form, tiklesinler").
+     Sayfa boştur: kişiler ve günler yalnız bağlantının # sonrasında gelir (sunucuya hiç gitmez, hiçbir yere kaydedilmez).
+     Cevap WhatsApp mesajı olarak ofise döner; Ofis Takip'te "WhatsApp cevabını yapıştır" ile işlenir. TC yoktur. -->
+<style>
+:root{--ana:#0f6e5c;--ana2:#e3f2ee;--yazi:#1d2733;--soluk:#6b7785;--cizgi:#dde3e9;--bg:#f4f6f8;--kirmizi:#c0392b;--sari:#b7791f}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--yazi);font-size:16px}
+header{background:var(--ana);color:#fff;padding:16px}header h1{font-size:20px;margin:0}header div{opacity:.85;font-size:14px;margin-top:4px}
+main{padding:12px;max-width:640px;margin:0 auto 230px}
+.kart{background:#fff;border:1px solid var(--cizgi);border-radius:12px;padding:12px 14px;margin:10px 0}
+.ad{font-weight:700;font-size:17px}.oz{color:var(--soluk);font-size:14px;margin-top:3px}.oz.deg{color:var(--kirmizi);font-weight:600}
+button{font:inherit;border-radius:10px;border:1px solid var(--cizgi);background:#fff;padding:10px 14px}
+.dg{margin-top:8px;font-size:14px;color:var(--ana);background:var(--ana2);border:0}
+.tak{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
+.tak .gb{font-size:11px;color:var(--soluk);text-align:center}
+.tak label{display:block;border-radius:8px;border:1px solid #0001;text-align:center;padding:3px 0 2px;position:relative}
+.tak label small{display:block;font-size:10px;color:#0008}.tak label b{font-size:15px}
+.tak label.fark{outline:2px solid var(--kirmizi)}
+.tak select{position:absolute;inset:0;opacity:0;width:100%;height:100%}
+.alan{margin-top:10px;font-size:14px}.alan input{font:inherit;width:100%;padding:8px;border:1px solid var(--cizgi);border-radius:8px;margin-top:4px}
+.lej{font-size:13px;line-height:1.9}.lej span{display:inline-block;padding:0 7px;border-radius:5px;margin:1px;border:1px solid #0001}
+footer{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--cizgi);padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+footer button{width:100%;background:var(--ana);color:#fff;border:0;font-size:18px;font-weight:700;padding:14px}
+footer div{font-size:13px;color:var(--soluk);text-align:center;margin-bottom:6px}
+.hata{background:#fbe9e7;color:var(--kirmizi);padding:14px;border-radius:10px}
+</style></head><body>
+<header><h1 id="bas">Puantaj onayı</h1><div id="alt"></div></header>
+<main id="m"><div class="kart">Yükleniyor…</div></main>
+<footer id="ft" hidden><div id="ftn"></div>
+<input id="onAd" placeholder="Adınız soyadınız" autocomplete="name" style="width:100%;font:inherit;padding:10px;border:1px solid var(--cizgi);border-radius:10px;margin-bottom:8px">
+<label style="display:flex;gap:8px;align-items:flex-start;font-size:14px;margin-bottom:8px"><input type="checkbox" id="onKut" style="width:22px;height:22px;flex:none"> <span>Yukarıdaki puantajın doğru olduğunu onaylıyorum.</span></label>
+<button id="gonder">Onaylıyorum</button></footer>
+<script>
+const KOD={N:"Normal",H:"Hafta tatili",T:"Resmi tatil","İ":"İzinli",S:"Yıllık izin",R:"Raporlu",E:"Eksik gün",Y:"Yarım gün",G:"Gece mesaisi",O:"Gündüz mesaisi",K:"Yarım gün resmi tatil",C:"Yarım gün hafta tatili",A:"Yarım gün yıllık izin"};
+const RENK={N:"#fff6d6",T:"#e9c9c9",H:"#d9c3c3","İ":"#d6dcff",G:"#cfd3e6",R:"#ffd0d8",E:"#f3d2f7",Y:"#d6f6fb",S:"#d3f5d3",O:"#fff3a8",K:"#ffdcb8",C:"#e8e0e0",A:"#cfe3ff"};
+const OLAGAN=new Set(["N","H","T",""]),AYLAR=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"],GUN=["Pz","Pt","Sa","Ça","Pe","Cu","Ct"];
+const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const b64u={en:u8=>{let s="";u8.forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")},
+  de:s=>{s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}};
+async function ac(s){if(s[0]==="z"){const r=new Response(new Blob([b64u.de(s.slice(1))]).stream().pipeThrough(new DecompressionStream("deflate-raw")));return JSON.parse(await r.text())}return JSON.parse(new TextDecoder().decode(b64u.de(s.slice(1))))}
+async function kapa(o){const u8=new TextEncoder().encode(JSON.stringify(o));try{const r=new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream("deflate-raw")));return"z"+b64u.en(new Uint8Array(await r.arrayBuffer()))}catch(e){return"j"+b64u.en(u8)}}
+const kodAc=s=>[...s].map(c=>c==="i"?"İ":c==="-"?"":c),kodKapa=g=>g.map(c=>c==="İ"?"i":c||"-").join("");
+function aralik(g,ay){const p=[];let i=0;while(i<g.length){const k=g[i];if(OLAGAN.has(k)){i++;continue}let j=i;while(j+1<g.length&&g[j+1]===k)j++;p.push(`${i===j?i+1:(i+1)+"–"+(j+1)} ${ay} ${(KOD[k]||k).toLocaleLowerCase("tr")}`);i=j+1}return p.join(", ")}
+(async()=>{let P;
+  try{P=await ac(location.hash.slice(1));if(!P||P.v!==1)throw 0}catch(e){$("#m").innerHTML='<div class="hata">Bağlantı eksik ya da bozuk. Lütfen size WhatsApp\'tan gelen bağlantıya yeniden dokunun ya da muhasebe ofisinizi arayın.</div>';return}
+  history.replaceState(null,"",location.pathname); /* kişiler adres çubuğunda / geçmişte kalmasın */
+  const [yil,aySay]=P.d.split("-").map(Number),AY=AYLAR[aySay-1],gunSay=new Date(yil,aySay,0).getDate(),ilkGun=new Date(yil,aySay-1,1).getDay();
+  document.title=`${P.f} · ${AY} ${yil} puantaj`;$("#bas").textContent=P.f;$("#alt").textContent=`${AY} ${yil} puantajı · ${P.o||""}`;
+  const K=P.k.map(x=>({ad:x[0],ilk:kodAc(x[1]).slice(0,gunSay),fm0:+x[2]||0,bi:x[3]||0,sira:x[4],neden0:x[5]||""})).map(k=>Object.assign(k,{g:k.ilk.slice(),fm:k.fm0,neden:k.neden0,acik:false}));
+  const degisti=k=>k.g.some((c,i)=>c!==k.ilk[i])||k.fm!==k.fm0||k.neden!==k.neden0;
+  const ciz=()=>{
+    $("#m").innerHTML=`<div class="kart" style="font-size:15px;line-height:1.5"><b>Ne yapmanız gerekiyor?</b><br>1. Aşağıda her çalışanın bu ay hangi günler çalıştığı yazıyor. Bakın.<br>2. Yanlış bir şey varsa o kişinin altındaki <b>Günleri değiştir</b>'e basın, yanlış güne dokunup doğrusunu seçin.<br>3. En altta adınızı yazın, kutuyu işaretleyin, <b>Onaylıyorum</b>'a basın.<br>4. WhatsApp açılır, hazır mesajı <b>gönderin</b>. Bu kadar.</div>`+
+     K.map((k,i)=>{const oz=aralik(k.g,AY),d=degisti(k);
+      return`<div class="kart"><div class="ad">${esc(k.ad)}</div><div class="oz${d?" deg":""}">${d?"Değiştirdiniz: ":""}${esc(oz||"Bütün ay normal çalıştı")}${k.fm?` · fazla mesai ${String(k.fm).replace(".",",")} saat`:""}</div>
+       ${k.acik?`<div class="tak">${GUN.map(g=>`<div class="gb">${g}</div>`).join("")}${"<div></div>".repeat(ilkGun)}${k.g.map((c,j)=>`<label class="${c!==k.ilk[j]?"fark":""}" style="background:${RENK[c]||"#fff"}"><small>${j+1}</small><b>${esc(c||"·")}</b><select data-k="${i}" data-g="${j}">${Object.entries(KOD).map(([a,b])=>`<option value="${a}" ${a===c?"selected":""}>${j+1} ${AY}: ${a} · ${b}</option>`).join("")}</select></label>`).join("")}</div>
+         ${k.g.includes("E")?`<div class="alan">Eksik gün nedeni<input data-n="${i}" value="${esc(k.neden)}" placeholder="örn. ücretsiz izin, devamsızlık"></div>`:""}
+         ${P.ek?`<div class="alan">Fazla mesai (saat, bu ay toplam)<input data-f="${i}" inputmode="decimal" value="${k.fm||""}" placeholder="yoksa boş bırakın"></div>`:""}
+         <button class="dg" data-ac="${i}">Kapat</button>`:`<button class="dg" data-ac="${i}">Günleri değiştir${P.ek?" / fazla mesai":""}</button>`}</div>`}).join("")+
+     `<div class="kart lej">${Object.entries(KOD).map(([a,b])=>`<span style="background:${RENK[a]}"><b>${a}</b> ${b}</span>`).join("")}</div>`;
+    document.querySelectorAll("[data-ac]").forEach(b=>b.onclick=()=>{K[+b.dataset.ac].acik=!K[+b.dataset.ac].acik;ciz()});
+    document.querySelectorAll("select[data-k]").forEach(s=>s.onchange=()=>{K[+s.dataset.k].g[+s.dataset.g]=s.value;ciz()});
+    document.querySelectorAll("[data-n]").forEach(x=>x.onchange=()=>{K[+x.dataset.n].neden=x.value.trim();ciz()});
+    document.querySelectorAll("[data-f]").forEach(x=>x.onchange=()=>{K[+x.dataset.f].fm=Math.max(0,Math.min(400,Number(x.value.replace(",","."))||0));ciz()});
+    const n=K.filter(degisti).length;$("#ft").hidden=false;
+    $("#ftn").textContent=n?`${n} kişide değişiklik yaptınız.`:"";
+    $("#gonder").textContent=n?"Değişikliklerle onaylıyorum":"Onaylıyorum"};
+  $("#gonder").onclick=async()=>{const D=K.filter(degisti),ad=$("#onAd").value.trim();
+    if(ad.length<3){alert("Lütfen adınızı soyadınızı yazın.");$("#onAd").focus();return}
+    if(!$("#onKut").checked){alert("Lütfen \"Yukarıdaki puantajın doğru olduğunu onaylıyorum\" kutusunu işaretleyin.");return}
+    if(D.some(k=>k.g.includes("E")&&!k.neden)&&!confirm("Eksik gün (E) olan kişide neden yazılmadı. Yine de gönderilsin mi?"))return;
+    const zaman=new Date().toLocaleString("tr-TR");
+    const kod=await kapa({v:1,a:P.a,d:P.d,h:P.h,ad,z:zaman,c:D.map(k=>[k.bi,k.sira,kodKapa(k.g),k.fm,k.neden])});
+    const t=[`*${P.f}* · ${AY} ${yil} puantajı`,`${D.length?"Aşağıdaki değişikliklerle":"Olduğu gibi"} *onaylıyorum.*`,`Onaylayan: ${ad} · ${zaman}`,"",
+      ...K.map(k=>`• ${k.ad}: ${aralik(k.g,AY)||"bütün ay normal"}${k.fm?` · fazla mesai ${String(k.fm).replace(".",",")} saat`:""}${k.neden?` · neden: ${k.neden}`:""}${degisti(k)?" (değiştirdim)":""}`),
+      "",`(Ofis için kod, lütfen silmeyin) PJ1:${kod}`].join("\n");
+    location.href=(P.t?`https://wa.me/${P.t}?text=`:"https://wa.me/?text=")+encodeURIComponent(t)};
+  ciz()})();
+</script></body></html>
