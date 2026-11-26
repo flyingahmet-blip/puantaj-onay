@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hizmet ücreti bilgi onayı</title>
+<meta name="robots" content="noindex">
+<!-- Müşterinin telefondan ücret tespit kısa onay formu (Ofis Takip, 2026-11-26, Ahmet: "whatsapp üzerinden okundu onaylandı şeklinde ·
+     bizdeki bilgileri verelim, sadece özet 3-5 soruyu cevaplamasını isteyen bir form"). Puantaj onay formunun (index.html) eşi.
+     Sayfa boştur: firma bilgileri yalnız bağlantının # sonrasında gelir (sunucuya hiç gitmez, hiçbir yere kaydedilmez).
+     Cevap WhatsApp mesajı olarak ofise döner ("UT1:" kodu); Ofis Takip'te "WhatsApp cevabı" ile işlenir. Tutar / VKN / TC yoktur. -->
+<style>
+:root{--ana:#0f6e5c;--ana2:#e3f2ee;--yazi:#1d2733;--soluk:#6b7785;--cizgi:#dde3e9;--bg:#f4f6f8;--kirmizi:#c0392b}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--yazi);font-size:16px}
+header{background:var(--ana);color:#fff;padding:16px}header h1{font-size:20px;margin:0}header div{opacity:.85;font-size:14px;margin-top:4px}
+main{padding:12px;max-width:640px;margin:0 auto 230px}
+.kart{background:#fff;border:1px solid var(--cizgi);border-radius:12px;padding:12px 14px;margin:10px 0}
+h2{font-size:17px;margin:4px 0 8px}
+table{width:100%;border-collapse:collapse;font-size:15px}td{padding:7px 4px;border-top:1px solid var(--cizgi);vertical-align:top}td:first-child{color:var(--soluk);width:46%}tr:first-child td{border-top:0}
+.s{font-weight:700;margin-bottom:6px}.s span{display:inline-block;min-width:22px;color:var(--ana)}
+label.sec{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--cizgi);border-radius:10px;margin:5px 0;font-size:15px}
+label.sec input{width:20px;height:20px;flex:none;margin:0}
+input.y,textarea{font:inherit;width:100%;padding:9px;border:1px solid var(--cizgi);border-radius:8px;margin-top:6px}
+textarea{min-height:70px}
+footer{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--cizgi);padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+footer button{width:100%;background:var(--ana);color:#fff;border:0;border-radius:10px;font:inherit;font-size:18px;font-weight:700;padding:14px}
+.hata{background:#fbe9e7;color:var(--kirmizi);padding:14px;border-radius:10px}
+</style></head><body>
+<header><h1 id="bas">Hizmet ücreti bilgi onayı</h1><div id="alt"></div></header>
+<main id="m"><div class="kart">Yükleniyor…</div></main>
+<footer id="ft" hidden>
+<input id="onAd" placeholder="Adınız soyadınız" autocomplete="name" style="width:100%;font:inherit;padding:10px;border:1px solid var(--cizgi);border-radius:10px;margin-bottom:8px">
+<label style="display:flex;gap:8px;align-items:flex-start;font-size:14px;margin-bottom:8px"><input type="checkbox" id="onKut" style="width:22px;height:22px;flex:none"> <span>Bilgileri okudum, cevaplarımın doğru olduğunu onaylıyorum.</span></label>
+<button id="gonder">Okudum, onaylıyorum</button></footer>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const b64u={en:u8=>{let s="";u8.forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/=+$/,"")},/* "_" WhatsApp'ta italik sayılıyor: standart base64 */
+  de:s=>{s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}};
+async function ac(s){if(s[0]==="z"){const r=new Response(new Blob([b64u.de(s.slice(1))]).stream().pipeThrough(new DecompressionStream("deflate-raw")));return JSON.parse(await r.text())}return JSON.parse(new TextDecoder().decode(b64u.de(s.slice(1))))}
+async function kapa(o){const u8=new TextEncoder().encode(JSON.stringify(o));try{const r=new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream("deflate-raw")));return"z"+b64u.en(new Uint8Array(await r.arrayBuffer()))}catch(e){return"j"+b64u.en(u8)}}
+addEventListener("hashchange",()=>location.reload());
+const YENI=["Hayır, yeni bir şey yok","Yeni faaliyet","Yeni şube / işyeri","E-ticaret","İthalat","İhracat"];
+const EK=["Hayır, istemiyorum","Yönetim raporu (gelir-gider, nakit akışı)","Kredi / teşvik dosyası","Şirket işlemleri (sermaye, ortaklık, nakil vb.)","Kişisel vergi işleri","Diğer"];
+const CIRO=["Azalacak","Aynı kalacak","Artacak"];
+(async()=>{let P;
+  try{P=await ac(location.hash.slice(1));if(!P||P.v!==1||!P.b)throw 0}catch(e){$("#m").innerHTML='<div class="hata">Bağlantı eksik ya da bozuk. Lütfen size WhatsApp\'tan gelen bağlantıya yeniden dokunun ya da muhasebe ofisinizi arayın.</div>';return}
+  history.replaceState(null,"",location.pathname); /* firma bilgileri adres çubuğunda / geçmişte kalmasın */
+  const Y=P.y,G=Y-1;document.title=`${P.f} · ${Y} hizmet ücreti`;$("#bas").textContent=P.f;$("#alt").textContent=`${Y} hizmet ücreti için bilgi onayı · ${P.o||""}`;
+  const sec=(ad,L,tip)=>L.map(o=>`<label class="sec"><input type="${tip}" name="${ad}" value="${esc(o)}"> ${esc(o)}</label>`).join("");
+  $("#m").innerHTML=`<div class="kart" style="font-size:15px;line-height:1.5"><b>Ne yapmanız gerekiyor?</b><br>1. Aşağıda bizdeki ${G} bilgileriniz yazıyor. Bakın.<br>2. 5 kısa soruyu cevaplayın.<br>3. En altta adınızı yazın, kutuyu işaretleyin, <b>Okudum, onaylıyorum</b>'a basın.<br>4. WhatsApp açılır, hazır mesajı <b>gönderin</b>. Bu kadar.</div>
+   <div class="kart"><h2>Bizdeki ${G} bilgileriniz</h2><table>${P.b.map(([a,v])=>`<tr><td>${esc(a)}</td><td>${esc(v||"—")}</td></tr>`).join("")}</table></div>
+   <div class="kart"><div class="s"><span>1.</span> Yukarıdaki bilgiler doğru mu?</div>${sec("s1",["Evet, doğru","Hayır, düzeltme var"],"radio")}<textarea id="s1d" placeholder="Yanlış olanı yazınız" hidden></textarea></div>
+   <div class="kart"><div class="s"><span>2.</span> ${Y}'de çalışan sayınız kaç olacak?</div><input class="y" id="s2" inputmode="numeric" placeholder="örn. 12 (çalışan yoksa 0)"></div>
+   <div class="kart"><div class="s"><span>3.</span> ${Y}'de yeni bir faaliyet, şube, e-ticaret, ithalat veya ihracat başlayacak mı?</div>${sec("s3",YENI,"checkbox")}<input class="y" id="s3d" placeholder="Kısa açıklama (isteğe bağlı)"></div>
+   <div class="kart"><div class="s"><span>4.</span> ${Y} cironuz için beklentiniz nedir?</div>${sec("s4",CIRO,"radio")}<input class="y" id="s4p" inputmode="numeric" placeholder="Yaklaşık % (isteğe bağlı, örn. 20)"></div>
+   <div class="kart"><div class="s"><span>5.</span> Ek hizmet istiyor musunuz?</div>${sec("s5",EK,"checkbox")}<input class="y" id="s5d" placeholder="Diğer ise yazınız" hidden></div>
+   <div class="kart" style="font-size:14px;color:var(--soluk)">Cevaplarınıza göre ayrıntı gerekirse size tam bilgi formunu ayrıca göndeririz. Bu formda kimlik, vergi ya da banka numarası istenmez.</div>`;
+  const tek=(a,b)=>document.querySelectorAll(`[name="${a}"]`).forEach(x=>x.addEventListener("change",()=>{if(x.checked&&x.value===b)document.querySelectorAll(`[name="${a}"]`).forEach(y=>{if(y!==x)y.checked=false});else if(x.checked)document.querySelectorAll(`[name="${a}"][value="${b}"]`).forEach(y=>y.checked=false)}));
+  tek("s3",YENI[0]);tek("s5",EK[0]);
+  document.querySelectorAll('[name="s1"]').forEach(x=>x.onchange=()=>{$("#s1d").hidden=!(x.checked&&x.value!=="Evet, doğru")});
+  document.querySelectorAll('[name="s5"]').forEach(x=>x.addEventListener("change",()=>{$("#s5d").hidden=!document.querySelector('[name="s5"][value="Diğer"]').checked}));
+  $("#ft").hidden=false;
+  const deg=a=>[...document.querySelectorAll(`[name="${a}"]:checked`)].map(x=>x.value);
+  $("#gonder").onclick=async()=>{const ad=$("#onAd").value.trim(),c1=deg("s1")[0]||"",c2=$("#s2").value.trim(),c3=deg("s3"),c4=deg("s4")[0]||"",c5=deg("s5");
+    const c1d=c1&&c1!=="Evet, doğru"?$("#s1d").value.trim():"",c3d=$("#s3d").value.trim(),c4p=$("#s4p").value.trim().replace(/[^\d.,-]/g,""),c5d=c5.includes("Diğer")?$("#s5d").value.trim():"";
+    const eks=[!c1&&1,!c2&&2,!c3.length&&3,!c4&&4,!c5.length&&5].filter(Boolean);
+    if(eks.length){alert(`Lütfen ${eks.join(", ")}. soruyu cevaplayın.`);return}
+    if(c1!=="Evet, doğru"&&!c1d){alert("1. soruda yanlış olan bilgiyi yazın.");$("#s1d").focus();return}
+    if(ad.length<3){alert("Lütfen adınızı soyadınızı yazın.");$("#onAd").focus();return}
+    if(!$("#onKut").checked){alert("Lütfen onay kutusunu işaretleyin.");return}
+    const zaman=new Date().toLocaleString("tr-TR");
+    const kod=await kapa({v:1,a:P.a,y:Y,h:P.h,ad,z:zaman,c:[c1,c1d,c2,c3,c3d,c4,c4p,c5,c5d]});
+    const t=[`*${P.f}* · ${Y} hizmet ücreti bilgi formu`,`Okudum, *onaylıyorum.*`,`Onaylayan: ${ad} · ${zaman}`,"",
+      `1. Bilgiler doğru mu: ${c1}${c1d?" · "+c1d:""}`,`2. ${Y} çalışan sayısı: ${c2}`,`3. Yeni faaliyet / şube / e-ticaret / ithalat / ihracat: ${c3.join(", ")}${c3d?" · "+c3d:""}`,
+      `4. Ciro beklentisi: ${c4}${c4p?" · yaklaşık %"+c4p:""}`,`5. Ek hizmet: ${c5.join(", ")}${c5d?" · "+c5d:""}`,
+      "",`(Ofis için kod, lütfen silmeyin) UT1:${kod}`].join("\n");
+    location.href=(P.t?`https://wa.me/${P.t}?text=`:"https://wa.me/?text=")+encodeURIComponent(t)};
+})();
+</script></body></html>
